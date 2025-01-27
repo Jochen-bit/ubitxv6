@@ -11,8 +11,8 @@ unsigned long _15m = 21096100l; //27dBm
 unsigned long _12m = 24926100l; //25dBm
 unsigned long _10m = 28126100l; //25dBm
 //unsigned long _6m = 50294500l; 
-unsigned long bandToWSPR [] = {_20m, _40m, _80m}; // Band auf dem WSPR gearbeitet werden soll. Variable muss zuvor mit Frequenz in Herz definiert sein.
-byte txPwr_dBm [] = {33, 30, 33}; //Sendeleistung in dBm - Gleiche Anzahl an Werten wie bei bandToWSPR !!!
+unsigned long bandToWSPR [] = {_10m, _12m, _15m, _17m}; // Band auf dem WSPR gearbeitet werden soll. Variable muss zuvor mit Frequenz in Herz definiert sein.
+byte txPwr_dBm [] = {25, 25, 27, 27}; //Sendeleistung in dBm - Gleiche Anzahl an Werten wie bei bandToWSPR !!!
 int txInterval = 4; //Sendeintervall in 2er Minutenschritte z.B. 2,4,8,12 max. 58 - Es wird der Modulus der Minute auf 0 geprüft.
 int32_t calibrationWSPR = 181069; //Abweichung in Herz von VCO 875Mhz
  // uBitX-WSPR-Configuration - end
@@ -365,10 +365,14 @@ void checkButton() {
   if (!btnDown()) //debounce
     return;
 
-  //active_delay(100);
-  startTxWSPR();
-
-  stopTxWSPR();
+    inTx = 1;
+    setTxMessage();
+ 
+    startTxWSPR();
+    
+    stopTxWSPR();
+    setTxMessage();
+  
 
   //doCommands();
   //wait for the button to go up again
@@ -508,7 +512,7 @@ void checkTxTime() {
   currentMin = minute();
   if (currentMin % txInterval == 0 && second() < 5) {
     inTx = 1;
-     setTxMessage();
+    setTxMessage();
  
     startTxWSPR();
     
