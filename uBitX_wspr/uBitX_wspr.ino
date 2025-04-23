@@ -1,9 +1,9 @@
  // uBitX-WSPR-Configuration - begin
  char call[] = "YOURCALL"; // Call des WSPR-Baken-Inhabers
- char loc[] = "LOCATOR"; // 4-Stelliger Locator des Bakenstandorts - nur 6 stellig, wenn zuvor Call in spitzen Klammer: <YOURCALL> = Type 2 Message
+ char loc[] = "YOURLOCATOR"; // 4-Stelliger Locator des Bakenstandorts - nur 6 stellig, wenn zuvor Call in spitzen Klammer: <YOURCALL> = Type 2 Message
  unsigned long _160m = 1838100l;
 unsigned long _80m = 3570100l;  //33dBm
-unsigned long _40m = 7040100l;  //30dBm
+unsigned long _40m = 7040100l;  //30dBm 
 unsigned long _30m = 10140200l; //30dBm
 unsigned long _20m = 14097100l; //33dBm
 unsigned long _17m = 18106100l; //27dBm
@@ -11,8 +11,8 @@ unsigned long _15m = 21096100l; //27dBm
 unsigned long _12m = 24926100l; //25dBm
 unsigned long _10m = 28126100l; //25dBm
 //unsigned long _6m = 50294500l; 
-unsigned long bandToWSPR [] = {_10m, _12m, _15m, _17m}; // Band auf dem WSPR gearbeitet werden soll. Variable muss zuvor mit Frequenz in Herz definiert sein.
-byte txPwr_dBm [] = {25, 25, 27, 27}; //Sendeleistung in dBm - Gleiche Anzahl an Werten wie bei bandToWSPR !!!
+unsigned long bandToWSPR [] = {_10m, _15m, _20m, _40m}; // Band auf dem WSPR gearbeitet werden soll. Variable muss zuvor mit Frequenz in Herz definiert sein.
+byte txPwr_dBm [] = {25, 27, 33, 30}; //Sendeleistung in dBm - Gleiche Anzahl an Werten wie bei bandToWSPR !!!
 int txInterval = 4; //Sendeintervall in 2er Minutenschritte z.B. 2,4,8,12 max. 58 - Es wird der Modulus der Minute auf 0 geprüft.
 int32_t calibrationWSPR = 181069; //Abweichung in Herz von VCO 875Mhz
  // uBitX-WSPR-Configuration - end
@@ -290,9 +290,9 @@ void setTXFilters(unsigned long freq) {
 //byte txBands = sizeof(bandToWSPR);
 //byte currentBand = 0; // position in array is 0
 void startTxWSPR() {
+  gpsSerial.end();
   //if(inTx == 0){
- // unsigned long tx_freq = 0;
-
+  // unsigned long tx_freq = 0;
   // digitalWrite(TX_RX, 1);
   inTx = 1;
   frequency = bandToWSPR[currentBand];
@@ -329,6 +329,7 @@ void startTxWSPR() {
     currentBand++;
   }
    setFrequencyMsg(1 );
+   gpsSerial.begin(9600);
 }
 
 void stopTxWSPR() {
@@ -510,10 +511,10 @@ void checkTxTime() {
     return;
   }
   currentMin = minute();
-  if (currentMin % txInterval == 0 && second() < 5) {
+  if (currentMin % txInterval == 0 && second() == 0) {
     inTx = 1;
     setTxMessage();
- 
+    delay(500); //enhance spots
     startTxWSPR();
     
     stopTxWSPR();
@@ -603,7 +604,7 @@ void clearErrorMsg() {
 
 
 void loop(void) {
-  while(gpsRead == 0 && gpsSerial.available() > 0) {
+  while(inTx == 0 && gpsRead == 0 && gpsSerial.available() > 0) {
     readFromGPS();
     gpsRead = 1;
   }
@@ -611,7 +612,7 @@ void loop(void) {
     if (second() > 15) {
       startUp = 1; //assuming Time is runing now on this device
     }
-  } else { // startUp = 1 ; startUp is over
+  } else { // startUp = 1 : startUp is over
     if(inTx == 0 && gpsRead == 1) {
       checkTxTime();
     }
